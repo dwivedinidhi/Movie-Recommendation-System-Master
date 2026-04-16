@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Movie Chatbot - AI Movie Assistant</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Header */
+        .header {
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .header h1 {
+            color: white;
+            font-size: 1.8rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .header a {
+            color: white;
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.2);
+            transition: all 0.3s;
+        }
+
+        .header a:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        /* Main Chat Container */
+        .chat-container {
+            flex: 1;
+            max-width: 900px;
+            width: 90%;
+            margin: 2rem auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* Chat Header */
+        .chat-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            color: white;
+        }
+
+        .bot-avatar {
+            width: 50px;
+            height: 50px;
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        .chat-header-info h2 {
+            font-size: 1.3rem;
+            margin-bottom: 0.2rem;
+        }
+
+        .chat-header-info p {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .clear-btn {
+            margin-left: auto;
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .clear-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        /* Messages Area */
+        .messages-container {
+            flex: 1;
+            padding: 1.5rem;
+            overflow-y: auto;
+            background: #f8f9fa;
+            min-height: 400px;
+            max-height: 500px;
+        }
+
+        .message {
+            margin-bottom: 1.5rem;
+            display: flex;
+            gap: 1rem;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .message.bot {
+            flex-direction: row;
+        }
+
+        .message.user {
+            flex-direction: row-reverse;
+        }
+
+        .message-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            font-size: 1.2rem;
+        }
+
+        .message.bot .message-avatar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .message.user .message-avatar {
+            background: #28a745;
+        }
+
+        .message-content {
+            max-width: 70%;
+            padding: 1rem 1.2rem;
+            border-radius: 15px;
+            line-height: 1.5;
+        }
+
+        .message.bot .message-content {
+            background: white;
+            border-bottom-left-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .message.user .message-content {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-bottom-right-radius: 5px;
+        }
+
+        /* Movie Cards in Chat */
+        .movie-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .movie-card {
+            background: white;
+            border-radius: 10px;
+            padding: 1rem;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s;
+        }
+
+        .movie-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .movie-card h4 {
+            color: #333;
+            margin-bottom: 0.5rem;
+            font-size: 0.95rem;
+        }
+
+        .movie-card .rating {
+            color: #ffc107;
+            font-weight: bold;
+        }
+
+        .movie-card .genres {
+            color: #666;
+            font-size: 0.85rem;
+            margin-top: 0.3rem;
+        }
+
+        /* Quick Suggestions */
+        .suggestions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 0.8rem;
+        }
+
+        .suggestion-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.3s;
+        }
+
+        .suggestion-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        /* Input Area */
+        .input-area {
+            padding: 1.5rem;
+            background: white;
+            border-top: 1px solid #e9ecef;
+            display: flex;
+            gap: 1rem;
+        }
+
+        .input-area input {
+            flex: 1;
+            padding: 1rem 1.5rem;
+            border: 2px solid #e9ecef;
+            border-radius: 25px;
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        .input-area input:focus {
+            border-color: #667eea;
+        }
+
+        .send-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        .send-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .send-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        /* Typing Indicator */
+        .typing-indicator {
+            display: none;
+            padding: 1rem;
+            color: #666;
+            font-style: italic;
+        }
+
+        .typing-indicator.active {
+            display: block;
+        }
+
+        /* Welcome Message */
+        .welcome-message {
+            text-align: center;
+            padding: 2rem;
+            color: #666;
+        }
+
+        .welcome-message h3 {
+            color: #333;
+            margin-bottom: 1rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .chat-container {
+                margin: 1rem;
+                width: calc(100% - 2rem);
+            }
+
+            .message-content {
+                max-width: 85%;
+            }
+
+            .movie-cards {
+                grid-template-columns: 1fr;
+            }
+
+            .header h1 {
+                font-size: 1.3rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <h1>🎬 Movie Recommendation System</h1>
+        <a href="/">← Back to Main Site</a>
+    </div>
+
+    <!-- Chat Container -->
+    <div class="chat-container">
+        <!-- Chat Header -->
+        <div class="chat-header">
+            <div class="bot-avatar">🤖</div>
+            <div class="chat-header-info">
+                <h2>Movie Chatbot</h2>
+                <p>Your AI-powered movie assistant</p>
+            </div>
+            <button class="clear-btn" onclick="clearConversation()">🔄 New Chat</button>
+        </div>
+
+        <!-- Messages -->
+        <div class="messages-container" id="messagesContainer">
+            <div class="welcome-message">
+                <h3>Welcome to the Movie Chatbot! 🎬</h3>
+                <p>Ask me anything about movies! I can help you find:</p>
+                <p>• Movies by genre • Films for your mood • Similar movies • And more!</p>
+            </div>
+        </div>
+
+        <!-- Typing Indicator -->
+        <div class="typing-indicator" id="typingIndicator">
+            🤖 Bot is typing...
+        </div>
+
+        <!-- Input Area -->
+        <div class="input-area">
+            <input 
+                type="text" 
+                id="messageInput" 
+                placeholder="Ask me about movies... (e.g., 'action movies', 'movies like Inception')"
+                onkeypress="handleKeyPress(event)"
+            >
+            <button class="send-btn" id="sendBtn" onclick="sendMessage()">Send</button>
+        </div>
+    </div>
+
+    <script>
+        // Initialize chat
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add initial bot message
+            setTimeout(() => {
+                addBotMessage("Hello! I'm your movie recommendation assistant. 🎬<br><br>How can I help you today? Ask me for movie suggestions, recommendations by genre, or movies similar to ones you love!");
+                loadSuggestions();
+            }, 500);
+        });
+
+        // Handle Enter key
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+
+        // Send message
+        function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const message = input.value.trim();
+            
+            if (!message) return;
+            
+            // Add user message
+            addUserMessage(message);
+            
+            // Clear input
+            input.value = '';
+            
+            // Show typing indicator
+            showTyping();
+            
+            // Send to server
+            fetch('/chat/api/chat/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    message: message,
+                    user_id: 'user_' + Date.now()
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                hideTyping();
+                
+                if (data.success) {
+                    addBotMessage(data.response);
+                    
+                    // Add movie cards if present
+                    if (data.movies && data.movies.length > 0) {
+                        addMovieCards(data.movies);
+                    }
+                    
+                    // Add suggestions
+                    if (data.suggestions && data.suggestions.length > 0) {
+                        addSuggestions(data.suggestions);
+                    }
+                } else {
+                    addBotMessage(data.response);
+                }
+            })
+            .catch(error => {
+                hideTyping();
+                addBotMessage("Sorry, I encountered an error. Please try again!");
+                console.error('Error:', error);
+            });
+        }
+
+        // Add user message to chat
+        function addUserMessage(message) {
+            const container = document.getElementById('messagesContainer');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message user';
+            messageDiv.innerHTML = `
+                <div class="message-avatar">👤</div>
+                <div class="message-content">${escapeHtml(message)}</div>
+            `;
+            container.appendChild(messageDiv);
+            scrollToBottom();
+        }
+
+        // Add bot message to chat
+        function addBotMessage(html) {
+            const container = document.getElementById('messagesContainer');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message bot';
+            messageDiv.innerHTML = `
+                <div class="message-avatar">🤖</div>
+                <div class="message-content">${html}</div>
+            `;
+            container.appendChild(messageDiv);
+            scrollToBottom();
+        }
+
+        // Add movie cards
+        function addMovieCards(movies) {
+            const container = document.getElementById('messagesContainer');
+            const cardsDiv = document.createElement('div');
+            cardsDiv.className = 'movie-cards';
+            
+            movies.forEach(movie => {
+                const card = document.createElement('div');
+                card.className = 'movie-card';
+                card.innerHTML = `
+                    <h4>${escapeHtml(movie.title)}</h4>
+                    <span class="rating">⭐ ${movie.rating}</span>
+                    <div class="genres">${escapeHtml(movie.genres || '')}</div>
+                `;
+                cardsDiv.appendChild(card);
+            });
+            
+            container.appendChild(cardsDiv);
+            scrollToBottom();
+        }
+
+        // Add quick suggestions
+        function addSuggestions(suggestions) {
+            const container = document.getElementById('messagesContainer');
+            const suggestionsDiv = document.createElement('div');
+            suggestionsDiv.className = 'suggestions';
+            
+            suggestions.forEach(suggestion => {
+                const btn = document.createElement('button');
+                btn.className = 'suggestion-btn';
+                btn.textContent = suggestion;
+                btn.onclick = () => {
+                    document.getElementById('messageInput').value = suggestion;
+                    sendMessage();
+                };
+                suggestionsDiv.appendChild(btn);
+            });
+            
+            container.appendChild(suggestionsDiv);
+            scrollToBottom();
+        }
+
+        // Load initial suggestions
+        function loadSuggestions() {
+            fetch('/chat/api/suggestions/')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.suggestions) {
+                        addSuggestions(data.suggestions);
+                    }
+                })
+                .catch(error => console.error('Error loading suggestions:', error));
+        }
+
+        // Clear conversation
+        function clearConversation() {
+            const container = document.getElementById('messagesContainer');
+            container.innerHTML = `
+                <div class="welcome-message">
+                    <h3>Chat cleared! 🎬</h3>
+                    <p>What would you like to explore next?</p>
+                </div>
+            `;
+            
+            // Reset bot
+            fetch('/chat/api/clear/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ user_id: 'user_' + Date.now() })
+            }).catch(error => console.error('Error clearing conversation:', error));
+            
+            // Add welcome message
+            setTimeout(() => {
+                addBotMessage("Conversation cleared! How can I help you discover great movies today? 🍿");
+                loadSuggestions();
+            }, 300);
+        }
+
+        // Show typing indicator
+        function showTyping() {
+            document.getElementById('typingIndicator').classList.add('active');
+            document.getElementById('sendBtn').disabled = true;
+        }
+
+        // Hide typing indicator
+        function hideTyping() {
+            document.getElementById('typingIndicator').classList.remove('active');
+            document.getElementById('sendBtn').disabled = false;
+        }
+
+        // Scroll to bottom of messages
+        function scrollToBottom() {
+            const container = document.getElementById('messagesContainer');
+            setTimeout(() => {
+                container.scrollTop = container.scrollHeight;
+            }, 100);
+        }
+
+        // Escape HTML to prevent XSS
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+    </script>
+</body>
+</html>
